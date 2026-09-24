@@ -135,6 +135,24 @@ export type SocketConfig = {
         maxAttempts?: number;
         delayMs?: number;
       };
+  /** arsya-baileys: built-in group metadata TTL cache (set false to disable) */
+  metadataCache?:
+    | false
+    | {
+        enabled?: boolean;
+        /** TTL in seconds (default 300) */
+        ttl?: number;
+        /** max LRU entries (default 1000) */
+        max?: number;
+      };
+  /** arsya-baileys: auto-retry transient media downloads (set false to disable) */
+  mediaDownloadRetry?:
+    | false
+    | {
+        enabled?: boolean;
+        maxAttempts?: number;
+        delayMs?: number;
+      };
   /**
    * Returns if a jid should be ignored,
    * no event for that jid will be triggered.

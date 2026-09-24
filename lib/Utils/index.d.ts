@@ -23,4 +23,6 @@ export * from "./sticker-pack.js";
 export * from "./send-queue.js";
 export * from "./auto-reconnect.js";
 export * from "./decrypt-retry.js";
+export * from "./metadata-cache.js";
+export * from "./media-download.js";
 //# sourceMappingURL=index.d.ts.map

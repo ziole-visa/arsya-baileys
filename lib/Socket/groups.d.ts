@@ -1,8 +1,13 @@
 import { proto } from '../../WAProto/index.js';
 import type { GroupMetadata, ParticipantAction, SocketConfig, WAMessageKey } from '../Types/index.js';
+import type { MetadataCache } from '../Utils/metadata-cache.js';
 import { type BinaryNode } from '../WABinary/index.js';
 export declare const makeGroupsSocket: (config: SocketConfig) => {
     groupMetadata: (jid: string) => Promise<GroupMetadata>;
+    /** arsya-baileys: always fetch fresh group metadata (bypasses metadataCache) */
+    groupMetadataFresh: (jid: string) => Promise<GroupMetadata>;
+    /** arsya-baileys: built-in group metadata TTL cache (null when disabled) */
+    metadataCache: MetadataCache | null;
     groupCreate: (subject: string, participants: string[]) => Promise<GroupMetadata>;
     groupLeave: (id: string) => Promise<void>;
     groupUpdateSubject: (jid: string, subject: string) => Promise<void>;

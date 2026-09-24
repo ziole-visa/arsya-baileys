@@ -64,6 +64,7 @@ export declare const DEFAULT_CACHE_TTLS: {
     MSG_RETRY: number;
     CALL_OFFER: number;
     USER_DEVICES: number;
+    GROUP_METADATA: number;
 };
 export declare const TimeMs: {
     Minute: number;

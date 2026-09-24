@@ -18,7 +18,45 @@ Ships compiled runtime files in `lib/` and protobuf artifacts in `WAProto/`, int
 
 ---
 
-## 🆕 Changelog / Updates (v9.1.0 — arsya-baileys)
+## 🆕 Changelog / Updates (v9.2.0 — arsya-baileys)
+
+**1. Metadata Cache Enhanced (TTL)**
+
+- Cache bawaan untuk `groupMetadata` (LRU + TTL + in-flight coalescing).
+- Auto-invalidate saat event `groups.update` / `group-participants.update`.
+- `groupMetadataFresh(jid)` untuk bypass cache (dipakai internal `groupUpdateDescription`).
+- Config:
+
+  ```js
+  const sock = makeWASocket({
+    metadataCache: {
+      enabled: true,  // false = nonaktif
+      ttl: 300,       // detik (default 5 menit)
+      max: 1000,      // max entry LRU
+    },
+  });
+  // sock.metadataCache.stats → { hits, misses, sets, coalesced }
+  // await sock.groupMetadata(jid)      → lewat cache
+  // await sock.groupMetadataFresh(jid) → always live
+  ```
+
+**2. Media Download Helpers**
+
+- `downloadToBuffer(message, type, opts, retry)` — download media ke `Buffer` dengan auto-retry.
+- `downloadContentFromMessageWithRetry(...)` — stream download + retry transient (408/425/429/5xx + network error). Status permanen (404/410) **tidak** di-retry.
+- Config `mediaDownloadRetry` (default: 3 attempts, delay 500ms × attempt).
+
+  ```js
+  import { downloadToBuffer, withMediaDownloadRetry } from 'arsya-baileys';
+
+  const buf = await downloadToBuffer(msgMedia, 'image', {}, { maxAttempts: 3, logger });
+  // atau retry generik:
+  await withMediaDownloadRetry(() => doWork(), { maxAttempts: 3, delayMs: 500 });
+  ```
+
+---
+
+## 🆕 Previous (v9.1.0 — arsya-baileys)
 
 **1. Anti-lag / Rate-limit Kirim (`SendQueue`)**
 
