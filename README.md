@@ -18,7 +18,42 @@ Ships compiled runtime files in `lib/` and protobuf artifacts in `WAProto/`, int
 
 ---
 
-## 🆕 Changelog / Updates (v9.2.0 — arsya-baileys)
+## 🆕 Changelog / Updates (v9.2.1 — arsya-baileys)
+
+**Bug Fixes**
+
+1. **Decrypt retry tidak lagi memblokir antrean pesan** (`messages-recv.js`)
+
+   - Backoff antar attempt decrypt kini berjalan **di luar** `messageMutex` — satu pesan gagal decrypt tidak lagi menahan seluruh queue inbound (head-of-line blocking ±1,2 detik per pesan gagal).
+   - Decrypt + post-processing (ack/receipt/retry-request/upsert) tetap dalam satu akuisisi mutex, sehingga urutan pesan terjaga.
+   - Error permanen (`Key used already or never filled`, `Message absent from node`) tidak lagi di-retry percuma — langsung ke jalur final (ack / placeholder resend).
+
+2. **`areJidsSameUser(undefined, undefined)` kini `false`**
+
+   - Sebelumnya `undefined === undefined` → `true`, sehingga notification/receipt tanpa jid dianggap "dari saya" (mis. `devices` notification, `isNodeFromMe` pada receipt).
+
+3. **Null-guard + error handling handler `CB:ib,,dirty`** (`groups.js`, `communities.js`, `chats.js`)
+
+   - Child `dirty` yang hilang tidak lagi melempar `TypeError` (destructure `undefined`).
+   - Async listener kini dibungkus try/catch — tidak ada lagi unhandled rejection yang bisa mematikan proses Node.
+
+4. **`SendQueue` ditutup saat disconnect** (`messages-send.js`)
+
+   - Listener `connection.update` menutup queue pada `close`: drain loop berhenti, pending task di-reject dengan jelas, push baru ditolak. `AutoReconnect` tetap aman (membuat socket + queue baru via factory).
+
+5. **`downloadToBuffer` retry menyeluruh** (`media-download.js`)
+
+   - Retry kini mencakup request **dan** pembacaan stream (connection reset di tengah stream sebelumnya lolos retry); stream di-destroy saat gagal agar tidak bocor.
+
+6. **Metadata cache koreksi TTL** (`metadata-cache.js`)
+
+   - TTL absolut dari waktu `set` (`updateAgeOnGet: false`) — entry yang sering dibaca tetap expire & refresh.
+   - `ttl: 0` kini benar-benar nonaktif (sebelumnya jatuh ke default karena `Number(0) || default`).
+   - `force: true` bypass in-flight coalescing + identity-check pada cleanup promise.
+
+---
+
+## 🆕 Previous (v9.2.0 — arsya-baileys)
 
 **1. Metadata Cache Enhanced (TTL)**
 
@@ -56,7 +91,7 @@ Ships compiled runtime files in `lib/` and protobuf artifacts in `WAProto/`, int
 
 ---
 
-## 🆕 Previous (v9.1.0 — arsya-baileys)
+## 🆕 Older (v9.1.0 — arsya-baileys)
 
 **1. Anti-lag / Rate-limit Kirim (`SendQueue`)**
 

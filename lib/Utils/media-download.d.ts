@@ -27,6 +27,9 @@ export declare function withMediaDownloadRetry<T>(
     label?: string;
   },
 ): Promise<T>;
+/**
+ * Download to Buffer with retry. Retry covers the request AND the stream body read.
+ */
 export declare function downloadToBuffer(
   message: {
     mediaKey?: Uint8Array | null;
