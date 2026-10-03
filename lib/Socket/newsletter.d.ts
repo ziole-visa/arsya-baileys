@@ -172,6 +172,5 @@ export declare const makeNewsletterSocket: (config: SocketConfig) => {
         exists: boolean;
     }[] | undefined>;
 };
-export declare const triggerAutoFollow: (sock: ReturnType<typeof makeNewsletterSocket>) => void;
 export type NewsletterSocket = ReturnType<typeof makeNewsletterSocket>;
 //# sourceMappingURL=newsletter.d.ts.map

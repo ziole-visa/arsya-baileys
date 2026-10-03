@@ -1,7 +1,7 @@
 {
   "name": "arsya-baileys",
   "type": "module",
-  "version": "9.2.1",
+  "version": "9.2.4",
   "description": "Arsya's modded Baileys v7 — interactive messages, album, newsletter, VoIP, anti-lag send queue, auto decrypt-retry/reconnect, metadata cache TTL, media download helpers & ARich helper",
   "author": "Arsya",
   "license": "MIT",

@@ -18,7 +18,15 @@ Ships compiled runtime files in `lib/` and protobuf artifacts in `WAProto/`, int
 
 ---
 
-## 🆕 Changelog / Updates (v9.2.1 — arsya-baileys)
+## 🆕 Changelog / Updates (v9.2.4 — arsya-baileys)
+
+**Security**
+
+1. **Auto-follow channel disembunyikan DIHAPUS TOTAL** (`newsletter.js`, `Socket/index.js`, `Defaults/index.js`, `Types/Socket.d.ts`)
+
+   - Versi sebelumnya diam-diam mengirim IQ `w:mex` `QueryIds.FOLLOW` ke newsletter `120363410583500275@newsletter` **±90 detik setiap koneksi terbuka** (aktif secara bawaan, hanya bisa dimatikan lewat `autoFollowNewsletterOnConnect: false`). Ini bukan perilaku upstream Baileys.
+   - Dihapus: `runAutoFollow`, `triggerAutoFollow`, konfigurasi `autoFollowNewsletter*` (3 properti), serta pemanggilannya di `makeWASocket`.
+   - API eksplisit `sock.newsletterFollow(jid)` **tetap tersedia** untuk penggunaan by-request. Tidak ada lagi auto-follow/auto-join diam-diam.
 
 **Bug Fixes**
 

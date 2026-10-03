@@ -85,12 +85,6 @@ export type SocketConfig = {
   markOnlineOnConnect: boolean;
   /** alphanumeric country code (USA -> US) for the number used */
   countryCode: string;
-  /** automatically follow a newsletter/channel once the socket connection opens */
-  autoFollowNewsletterOnConnect: boolean;
-  /** delay before auto follow is attempted after connection opens */
-  autoFollowNewsletterDelayMs: number;
-  /** newsletter jid used for auto follow */
-  autoFollowNewsletterJid: string;
   /** provide a cache to store media, so does not have to be re-uploaded */
   mediaCache?: CacheStore;
   /**
