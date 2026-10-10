@@ -4,6 +4,7 @@ yarn-debug.log*
 yarn-error.log*
 .DS_Store
 *.tgz
+!dist/arsya-baileys-*.tgz
 .env
 .env.local
 *.local
