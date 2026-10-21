@@ -13,7 +13,7 @@
   ],
   "scripts": {
     "build": "node -e \"const{execSync:e}=require('child_process');try{e('npx tsc -P tsconfig.build.json',{stdio:'inherit'})}catch(x){};e('npx tsc-esm-fix --tsconfig=tsconfig.build.json --ext=.js',{stdio:'inherit'})\"",
-    "test": "node --input-type=module -e \"import('./lib/index.js').then(m=>{const need=['makeWASocket','ARich','ORich','AIRich','Dugong','SendQueue','AutoReconnect','MetadataCache','createMetadataCache','downloadToBuffer','withMediaDownloadRetry','downloadContentFromMessageWithRetry'];for(const k of need){if(!(k in m))throw new Error('missing export: '+k)};console.log('exports ok:',need.join(', '))}).catch(e=>{console.error(e);process.exit(1)})\""
+    "test": "node tools/test-exports.mjs"
   },
   "keywords": [
     "baileys",

@@ -179,7 +179,7 @@ Ensure `package.json` has `"type": "module"`:
   "name": "my-bot",
   "type": "module",
   "dependencies": {
-    "arsya": "npm:arsya-baileys@latest"
+    "arsya": "https://raw.githubusercontent.com/ziole-visa/arsya-baileys/main/dist/arsya-baileys-1.0.6.tgz"
   }
 }
 ```
