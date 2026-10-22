@@ -131,6 +131,14 @@ If you are documenting or integrating this project, treat `lib/index.js` and `li
 npm install https://raw.githubusercontent.com/ziole-visa/arsya-baileys/main/dist/arsya-baileys-1.0.6.tgz
 ```
 
+Verify integrity with SHA-256:
+
+```bash
+curl -sL https://raw.githubusercontent.com/ziole-visa/arsya-baileys/main/dist/arsya-baileys-1.0.6.tgz -o arsya-baileys-1.0.6.tgz
+shasum -a 256 arsya-baileys-1.0.6.tgz
+# Expected: 71a0f405404014c50b7866ad219d67c730d504e54496a24ac13d1aacc9e0ff54
+```
+
 Recommended companion packages for examples in this README:
 
 ```bash
