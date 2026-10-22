@@ -1,5 +1,5 @@
 {
-  "name": "arsya-baileys",
+  "name": "arsya-baileys-open",
   "type": "module",
   "version": "1.0.6",
   "description": "Arsya's modded Baileys v7 — interactive messages, album, newsletter, VoIP, anti-lag send queue, auto decrypt-retry/reconnect, metadata cache TTL, media download helpers & ARich helper",
